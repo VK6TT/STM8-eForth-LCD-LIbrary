@@ -1,0 +1,6 @@
+: HW \ Hellow World example
+   LCDINIT
+   $" HELLO" LCDTYPE
+   LCD_L2
+   $" WORLD" LCDTYPE
+   ;
