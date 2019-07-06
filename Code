@@ -23,7 +23,7 @@ $500E constant PC_CR2
   ROT 0= 1 AND SWAP 2* $10 + + $72 C, C, , ]
 ; IMMEDIATE
 : ]C! $35 C, SWAP C, , ] ; IMMEDIATE
-
+ 
 NVM
 : setLCD_pins  ( -- )
    [ $FE  PC_DDR ]C!  \ Port c outputs
