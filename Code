@@ -1,0 +1,122 @@
+\ *  Desc: Library for Hitachi HD44780 LCDs on STM8 architecture.
+
+NVM
+: *10us  ( n -- )  \  delay n * 10us
+   1- FOR [
+      $A62B ,    \      LD    A,#42
+      $4A  C,    \ 1$:  DEC   A
+      $26FD ,    \      JRNE  1$
+   ] NEXT
+   ;
+
+: ms  ( n -- )  \  delay n ms
+   1- FOR 100 *10us NEXT
+   ;
+
+RAM
+$500A constant PC_ODR
+$500C CONSTANT PC_DDR
+$500D constant PC_CR1
+$500E constant PC_CR2
+
+: ]B! ( 1|0 addr bit -- )
+  ROT 0= 1 AND SWAP 2* $10 + + $72 C, C, , ]
+; IMMEDIATE
+: ]C! $35 C, SWAP C, , ] ; IMMEDIATE
+
+NVM
+: setLCD_pins  ( -- )
+   [ $FE  PC_DDR ]C!  \ Port c outputs
+   [ $FE PC_CR1 ]C!  \ set up as push pull outputs
+;
+\ Naming conention is PIN+1|0 meaing high or low.
+: SRS1 ( -- ) [ 1 PC_ODR 1 ]B! ;
+: SRS0 ( -- ) [ 0 PC_ODR 1 ]B! ;
+: SRW1 ( -- ) [ 1 PC_ODR 2 ]B! ;
+: SRW0 ( -- ) [ 0 PC_ODR 2 ]B! ;
+: SEN1 ( -- ) [ 1 PC_ODR 3 ]B! ;
+: SEN0 ( -- ) [ 0 PC_ODR 3 ]B! ;
+: SC40 ( -- ) [ 0 PC_ODR 4 ]B! ;
+: SC41 ( -- ) [ 1 PC_ODR 4 ]B! ;
+: SC50 ( -- ) [ 0 PC_ODR 5 ]B! ;
+: SC51 ( -- ) [ 1 PC_ODR 5 ]B! ;
+: SC60 ( -- ) [ 0 PC_ODR 6 ]B! ;
+: SC61 ( -- ) [ 1 PC_ODR 6 ]B! ;
+: SC70 ( -- ) [ 0 PC_ODR 7 ]B! ;
+: SC71 ( -- ) [ 1 PC_ODR 7 ]B! ;
+
+\ If you wanted to swap the enable pin (3) with data pin 7 then you
+\ would change 
+\ : SENx ( -- ) [ x PC_ODR 7 ]B! ; ( two lines to change )
+\ : SC7x ( -- ) [ x PC_ODR 3 ]B! ; ( again, two lines to change )
+
+
+: EN_Toggle \ toggle enable pin
+   1 *10us \ time to stabililse
+   SEN1 1 *10us
+   SEN0 1 *10us
+   ;
+
+: .nibble ( n1 --- n1 ) \ output nibble to port C
+   DUP $80 AND
+   if SC71 else sc70 then
+   dup $40 and 
+   if SC61 else sc60 then
+   dup $20 and 
+   if SC51 else sc50 then
+   dup $10 and 
+   if SC41 else sc40 then
+   EN_Toggle
+   ;
+: .nibble_H
+   $10 * .nibble drop
+;
+: LCD! ( byte --- )   
+   .nibble 
+   .nibble_H
+   5 *10us
+   ;
+: LCDInit! ( byte --- )   
+   .nibble 5 ms 
+   .nibble_H 5 ms 
+;
+: LCDCMD! ( byte --- )
+   SRS0
+   LCD!
+   ;
+: LCDDATA! ( byte --- )
+   SRS1
+   LCD!
+   ;
+: LCD_EM $06 LCDCMD! ; \ incr addr, CSR moves right
+: LCDCLR $01 LCDCMD! 2 ms ;
+: LCDHOME $02 LCDCMD! 2 ms ;
+: LCDRST
+   SEN0 SRW0 SRS0
+   $33 LCDINIT! 
+   $32 LCDINIT!
+   $28 LCDCMD!    \  4 bit, 2 line and 5x7 dots
+   $08 LCDCMD!    \ LCD off
+   LCDCLR
+   LCD_EM   \ Entry mode
+   LCDHOME
+   $0c LCDCMD!    \ LCD off
+;
+: LCDINIT 
+   SetLCD_Pins 64 ms
+   LCDRST
+;   
+: LCDS!  ( a1 n1 --- ) \ write string to LCD from current cursor
+   0 do
+      dup I + C@ LCDDATA!
+   loop
+   drop
+   ;
+: LCD_L2 ( --- ) \ shift cursor to startof line 2
+   $C0 LCDCMD!
+;
+ : LCDTYPE ( a1 --- ) \ type string to lcd
+      count LCDS!
+      ;
+  
+ram
