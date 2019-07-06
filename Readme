@@ -1,0 +1,3 @@
+I've done this a few times now in different Forth implementaitons. Doing it with eForth was smooth but I'm yet to try and reduce the code size. 
+
+I use Port C of the STM8903 micro on a custom board. I'm using the 4bit mode of interfacing to the LCD. All 7 pins on Port C are bit banged which makes swapping pins to suit a different PCD layout easy.
