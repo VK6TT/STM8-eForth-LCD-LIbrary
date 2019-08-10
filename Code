@@ -57,28 +57,27 @@ NVM
    SEN0 1 *10us
    ;
 
-: .nibble ( n1 --- n1 ) \ output nibble to port C
+: .nibble ( n1 ---  n1 ) \ output nibble to port C 94 bytes
+    SC70 SC60 SC50 SC40 \ start with all bits low  
    DUP $80 AND
-   if SC71 else sc70 then
+   if SC71  then
    dup $40 and 
-   if SC61 else sc60 then
+   if SC61 then
    dup $20 and 
-   if SC51 else sc50 then
+   if SC51 then
    dup $10 and 
-   if SC41 else sc40 then
+   if SC41 then
    EN_Toggle
    ;
-: .nibble_H
-   $10 * .nibble drop
-;
 : LCD! ( byte --- )   
-   .nibble 
-   .nibble_H
+   .nibble  
+   $10 * .nibble 
+   drop
    5 *10us
    ;
 : LCDInit! ( byte --- )   
    .nibble 5 ms 
-   .nibble_H 5 ms 
+   $10 * .nibble 5 ms 
 ;
 : LCDCMD! ( byte --- )
    SRS0
