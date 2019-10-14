@@ -1,4 +1,5 @@
 \ *  Desc: Library for Hitachi HD44780 LCDs on STM8 architecture.
+\ Using 7 bits on Port C to drive display so you will need to adjust if you do not have all outputs available
 
 NVM
 : *10us  ( n -- )  \  delay n * 10us
@@ -80,12 +81,10 @@ NVM
    $10 * .nibble 5 ms 
 ;
 : LCDCMD! ( byte --- )
-   SRS0
-   LCD!
+   SRS0 LCD!
    ;
 : LCDDATA! ( byte --- )
-   SRS1
-   LCD!
+   SRS1 LCD!
    ;
 : LCD_EM $06 LCDCMD! ; \ incr addr, CSR moves right
 : LCDCLR $01 LCDCMD! 2 ms ;
@@ -110,12 +109,12 @@ NVM
       dup I + C@ LCDDATA!
    loop
    drop
-   ;
+;
 : LCD_L2 ( --- ) \ shift cursor to startof line 2
    $C0 LCDCMD!
 ;
- : LCDTYPE ( a1 --- ) \ type string to lcd
+: LCDTYPE ( a1 --- ) \ type string to lcd
       count LCDS!
-      ;
+;
   
 ram
